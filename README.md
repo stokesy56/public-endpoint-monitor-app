@@ -23,10 +23,10 @@ make docker-run     # exposes metrics at http://localhost:9000/metrics
 ## Probe in Action
 
 ```bash
-poetry run python -m probe https://www.google.com
+	poetry run python -m public_endpoint_monitor.probe https://www.google.com
 ```
 Outputs:
 ```ini
-success=True latency=0.135 s
+target=https://www.google.com success=True latency=0.141s
 ```
-**Note:** `poetry run python -m probe` would run using https://www.google.com by default
+**Note:** `	poetry run python -m public_endpoint_monitor.probe` would run using https://www.google.com by default
