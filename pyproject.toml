@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "public-endpoint-monitor"
+version = "0.1.0"
+description = ""
+authors = ["Rory Stokes <stokesyrory@hotmail.co.uk>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+requests = "^2.32.4"
+prometheus-client = "^0.22.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+black = "^25.1.0"
+flake8 = "^7.3.0"
+pre-commit = "^4.2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

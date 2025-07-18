@@ -1,0 +1,19 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.3.0
+    hooks:
+      - id: flake8
+
+  # run test suite in the existing Poetry venv
+  - repo: local
+    hooks:
+      - id: pytest-poetry
+        name: pytest (poetry)
+        entry: bash -c 'poetry run pytest -q'
+        language: system        # use system Python + current venv
+        pass_filenames: false   # run whole suite, not just changed files

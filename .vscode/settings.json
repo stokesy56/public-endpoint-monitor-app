@@ -1,0 +1,9 @@
+{
+  // Use Poetry virtualenv
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  // Auto‑format on save
+  "editor.formatOnSave": true,
+  "python.formatting.provider": "black",
+  // Lint with Flake8
+  "python.linting.flake8Enabled": true
+}
