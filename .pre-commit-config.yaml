@@ -9,11 +9,15 @@ repos:
     hooks:
       - id: flake8
 
-  # run test suite in the existing Poetry venv
   - repo: local
     hooks:
       - id: pytest-poetry
         name: pytest (poetry)
         entry: bash -c 'poetry run pytest -q'
-        language: system        # use system Python + current venv
-        pass_filenames: false   # run whole suite, not just changed files
+        language: system
+        pass_filenames: false
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-yaml
