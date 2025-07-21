@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pem-metrics
+  namespace: pem
+spec:
+  type: ClusterIP
+  selector:
+    app: pem
+  ports:
+    - name: metrics
+      port: 9000
+      targetPort: 9000

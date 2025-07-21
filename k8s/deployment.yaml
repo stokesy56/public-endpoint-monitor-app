@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pem-service
+  namespace: pem
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pem
+  template:
+    metadata:
+      labels:
+        app: pem
+    spec:
+      containers:
+        - name: probe
+          image: public-endpoint-manager:dev
+          args:
+            - "--url=https://www.google.com"
+            - "--interval=30"
+          ports:
+            - name: metrics          # Prometheus scrape port
+              containerPort: 9000
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"

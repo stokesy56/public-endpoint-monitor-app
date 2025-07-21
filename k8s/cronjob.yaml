@@ -1,0 +1,18 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pem-probe-5min
+  namespace: pem
+spec:
+  schedule: "*/5 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: probe
+              image: public-endpoint-manager:dev
+              args: ["--url=https://www.google.com", "--interval=30s"] # one‑shot
