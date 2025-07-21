@@ -66,3 +66,12 @@ You should see logs every 30s:
 2025-07-18T13:24:05Z INFO target=https://www.google.com success=True latency=0.12s
 
 ```
+
+### make workflow
+```ini
+make kind-up          # one‑shot cluster + image load
+make k8s-apply        # apply manifests
+make k8s-port         # background port-forward
+curl localhost:9000/metrics | grep ^pem_ # separate terminal - displays metrics
+make kind-down        # cleanup when done
+```
