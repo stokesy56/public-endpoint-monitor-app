@@ -5,45 +5,30 @@ on:
     branches: [ main ]
   pull_request:
 
-# ---------------------------- common literals / secrets -----------------------
 env:
   REGION: europe-west2
-  PROJECT: ${{ secrets.GCP_PROJECT }}              # set in repo secrets
-  REPO: public-endpoint-monitor                   # Artifact Registry repo
+  PROJECT: ${{ secrets.GCP_PROJECT }}
+  REPO: public-endpoint-monitor
   IMAGE: public-endpoint-monitor
   CHART_NAME: public-endpoint-monitor
-  CHART_VERSION: 0.1.${{ github.run_number }}     # simple semver scheme
+  CHART_VERSION: 0.1.${{ github.run_number }}
 
-# ------------------------------------------------------------------------------
 jobs:
-  # ---------------------------- tests & linters --------------------------------
   test-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+        with: { python-version: "3.11" }
+      - run: pip install poetry==1.8.2
+      - run: poetry install
+      - run: poetry run pytest -q
+      - run: poetry run pre-commit run --all-files
 
-      - name: Install dependencies
-        run: |
-          pip install poetry==1.8.2
-          poetry install
-
-      - name: Run unit tests
-        run: poetry run pytest -q
-
-      - name: Run pre-commit hooks
-        run: poetry run pre-commit run --all-files
-
-  # --------------------- build image + chart, push to GAR ---------------------
   build-and-push:
     needs: test-lint
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
+    permissions: { id-token: write, contents: read }
     steps:
       - uses: actions/checkout@v4
 
@@ -57,14 +42,14 @@ jobs:
       - name: Set registry env vars
         run: |
           echo "REGISTRY_HOST=${{ env.REGION }}-docker.pkg.dev" >> $GITHUB_ENV
-          echo "REGISTRY=${{ env.REGISTRY_HOST }}/${{ env.PROJECT }}/${{ env.REPO }}" >> $GITHUB_ENV
+          echo "REGISTRY=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT }}/${{ env.REPO }}" >> $GITHUB_ENV
 
       # ── Configure Docker creds for Artifact Registry host only -------------
       - name: Configure Docker
         run: gcloud auth configure-docker $REGISTRY_HOST --quiet
 
       # ── Build & push container image --------------------------------------
-      - name: Build and push image
+      - name: Build & push image
         run: |
           docker build -t $REGISTRY/$IMAGE:${{ github.sha }} .
           docker push $REGISTRY/$IMAGE:${{ github.sha }}
