@@ -42,32 +42,34 @@ jobs:
     needs: test-lint
     runs-on: ubuntu-latest
     permissions:
-      id-token: write          # needed for workload‑identity federation
+      id-token: write
       contents: read
     steps:
       - uses: actions/checkout@v4
 
-      # -- Auth to Google Cloud -------------------------------------------------
+      # ── Auth to Google Cloud via OIDC ──────────────────────────────────────
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_PROVIDER }}
           service_account: ci-build@${{ env.PROJECT }}.iam.gserviceaccount.com
 
-      # -- Derive REGISTRY (depends on REGION & PROJECT) ------------------------
-      - name: Set dynamic REGISTRY env var
-        run: echo "REGISTRY=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT }}/${{ env.REPO }}" >> $GITHUB_ENV
+      # ── Derive registry host + full path ───────────────────────────────────
+      - name: Set registry env vars
+        run: |
+          echo "REGISTRY_HOST=${{ env.REGION }}-docker.pkg.dev" >> $GITHUB_ENV
+          echo "REGISTRY=${{ env.REGISTRY_HOST }}/${{ env.PROJECT }}/${{ env.REPO }}" >> $GITHUB_ENV
 
-      # -- Configure Docker for Artifact Registry ------------------------------
+      # ── Configure Docker creds for Artifact Registry host only -------------
       - name: Configure Docker
-        run: gcloud auth configure-docker $REGISTRY --quiet
+        run: gcloud auth configure-docker $REGISTRY_HOST --quiet
 
-      # -- Build & push container image ----------------------------------------
+      # ── Build & push container image --------------------------------------
       - name: Build and push image
         run: |
           docker build -t $REGISTRY/$IMAGE:${{ github.sha }} .
           docker push $REGISTRY/$IMAGE:${{ github.sha }}
 
-      # -- Helm lint & package chart -------------------------------------------
+      # ── Helm lint & package chart -----------------------------------------
       - name: Helm lint & package
         run: |
           helm lint charts/$CHART_NAME
@@ -75,8 +77,10 @@ jobs:
             --version $CHART_VERSION \
             --destination dist
 
-      # -- Push chart to Artifact Registry as OCI ------------------------------
+      # ── Login & push chart as OCI (host only) ------------------------------
       - name: Push Helm chart
         run: |
-          helm registry login $REGISTRY -u oauth2accesstoken -p "$(gcloud auth print-access-token)"
+          helm registry login $REGISTRY_HOST \
+            -u oauth2accesstoken \
+            -p "$(gcloud auth print-access-token)"
           helm push dist/$CHART_NAME-$CHART_VERSION.tgz oci://$REGISTRY/helm
