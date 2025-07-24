@@ -21,3 +21,6 @@ repos:
     rev: v4.6.0
     hooks:
       - id: check-yaml
+        files: \.(yml|yaml)$
+        exclude: charts/.*/templates/.*  # ← skip Helm template dir
+

@@ -1,0 +1,22 @@
+replicaCount: 1
+
+image:
+  repository: public-endpoint-monitor
+  tag: dev
+  pullPolicy: IfNotPresent
+
+probe:
+  url: https://www.google.com
+  interval: 30   # seconds
+
+service:
+  type: ClusterIP
+  port: 9000
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi

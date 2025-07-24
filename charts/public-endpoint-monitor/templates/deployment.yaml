@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "pem.fullname" . }}
+  labels: {{- include "pem.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "pem.selectorLabels" . | nindent 8 }}
+  template:
+    metadata:
+      labels: {{- include "pem.selectorLabels" . | nindent 12 }}
+    spec:
+      containers:
+        - name: probe
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "--url={{ .Values.probe.url }}"
+            - "--interval={{ .Values.probe.interval }}"
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          resources: {{- toYaml .Values.resources | nindent 14 }}

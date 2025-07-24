@@ -1,7 +1,37 @@
 # Public Endpoint monitor
-
-Availability & latency monitoring for third‑party services  
 *(built as a DevOps portfolio project)*
+
+Synthetic probe service that checks any HTTP/S endpoint, logs the result, and exports Prometheus metrics.
+
+- **Python micro‑service**
+
+	probe() does a GET + latency timing
+	- Prometheus counters & histogram (/metrics on :9000)
+	- service.py loops forever (--url + --interval) and logs to stdout/stderr.
+
+- **Containerised**
+
+	Multi‑stage Dockerfile (Poetry 1.8.2, Python 3.11‑slim).
+
+	make docker-build / make docker-run URL=… for local testing.
+
+- **Helm chart (charts/public-endpoint-monitor)**
+
+	Deploys a Deployment + Service (ClusterIP) with configurable image, target URL, probe interval, resources.
+
+	Short helper prefix pem.*; lint‑clean, no scaffold cruft.
+
+- **Kind‑based dev cluster**
+
+	make kind-up → Kubernetes v1.33 single‑node cluster.
+
+	make helm-install installs the release into pem namespace; make helm-port forwards metrics to localhost:9000.
+
+- **Pre‑commit & tests**
+
+	Black, Flake8, pytest, YAML validation hooks.
+
+	Unit tests cover probe logic and the long‑running service loop.	
 
 [![CI](https://github.com/stokesy56/public-endpoint-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/stokesy56/public-endpoint-monitor/actions/workflows/ci.yml)
 
@@ -74,4 +104,13 @@ make k8s-apply        # apply manifests
 make k8s-port         # background port-forward
 curl localhost:9000/metrics | grep ^pem_ # separate terminal - displays metrics
 make kind-down        # cleanup when done
+```
+
+## Helm
+### make workflow
+```ini
+make kind-up             # once per cluster
+make helm-install        # install/upgrade cleanly
+make helm-port           # /metrics at localhost:9000
+curl localhost:9000/metrics | grep ^pem_
 ```

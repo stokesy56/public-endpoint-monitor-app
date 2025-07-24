@@ -23,7 +23,7 @@ INTERVAL = 5
 NAME     = pem-loop
 
 docker-build:
-	docker build -t $(IMAGE) .
+	docker build -t $(IMAGE) /home/rory/projects/public-endpoint-monitor-app/Dockerfile
 
 docker-run:
 	docker run --rm -p 9000:9000 $(IMAGE) --url=$(URL) --interval=$(INTERVAL)
@@ -42,7 +42,7 @@ kind-up: docker-build
 
 k8s-apply:
 	kubectl create ns $(NS) --dry-run=client -o yaml | kubectl apply -f -
-	kubectl apply -f k8s/
+	kubectl apply -f /home/rory/projects/public-endpoint-monitor-app/k8s/
 
 k8s-port:
 	kubectl port-forward svc/pem-metrics -n $(NS) 9000:9000
@@ -50,6 +50,20 @@ k8s-port:
 kind-down:
 	kind delete cluster --name $(CLUSTER)
 
+CHART_DIR ?= /home/rory/projects/public-endpoint-monitor-app/charts/public-endpoint-monitor
+RELEASE   ?= pem-dev
+
+# ── Helm ────────────────────────────────────────────────────────
+
+helm-clean:
+	helm uninstall $(RELEASE) -n $(NS) || true
+	kubectl delete deploy,svc -l app=pem --namespace $(NS) --ignore-not-found
+
+helm-install: helm-clean
+	helm upgrade --install $(RELEASE) $(CHART_DIR) --namespace $(NS) --create-namespace
+
+helm-port:
+	kubectl port-forward svc/$(RELEASE)-pem-metrics -n $(NS) 9000:9000
 
 
-.PHONY: install lint test format docker-build docker-run kind-up k8s-apply k8s-port kind-down
+.PHONY: install lint test format docker-build docker-run kind-up k8s-apply k8s-port kind-down helm-clean helm-install helm-port
