@@ -81,4 +81,19 @@ monitor-port-prometheus:
 monitor-port-grafana:
 	kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
 
-.PHONY: install lint test format docker-build docker-run kind-up k8s-apply k8s-port kind-down helm-clean helm-install helm-port monitor-up monitor-port-prometheus monitor-port-grafana
+PROJECT_ID ?= $(shell gcloud config get-value project)
+REGION ?= europe-west2
+REGISTRY_HOST ?= $(REGION)-docker.pkg.dev
+CHART_PATH ?= oci://$(REGISTRY_HOST)/$(PROJECT_ID)/public-endpoint-monitor/helm/public-endpoint-monitor
+
+helm-login:
+	gcloud auth print-access-token | \
+	  helm registry login $(REGISTRY_HOST) -u oauth2accesstoken --password-stdin
+
+helm-install-remote: helm-login
+	helm pull $(CHART_PATH) --version $(VERSION)
+	helm upgrade --install $(RELEASE) $(CHART_PATH) \
+	  --version $(VERSION) \
+	  --namespace $(NS) --create-namespace
+
+.PHONY: install lint test format docker-build docker-run kind-up k8s-apply k8s-port kind-down helm-clean helm-install helm-port monitor-up monitor-port-prometheus monitor-port-grafana helm-login helm-install-remote

@@ -98,7 +98,7 @@ You should see logs every 30s:
 ```
 
 ### make workflow
-```ini
+```bash
 make kind-up          # one‑shot cluster + image load
 make k8s-apply        # apply manifests
 make k8s-port         # background port-forward
@@ -108,9 +108,74 @@ make kind-down        # cleanup when done
 
 ## Helm
 ### make workflow
-```ini
+```bash
 make kind-up             # once per cluster
 make helm-install        # install/upgrade cleanly
 make helm-port           # /metrics at localhost:9000
 curl localhost:9000/metrics | grep ^pem_
+```
+
+## Continuous Integration & Delivery (GitHub Actions)
+
+Every push or PR triggers the **CI** workflow:
+
+| Stage | Tool | What happens |
+|-------|------|--------------|
+| **Tests & linters** | `pytest`, **pre‑commit** (Black, Flake8, YAML) | Ensures code quality and unit tests pass. |
+| **Build & push image** | Docker → **Artifact Registry** | Publishes `europe‑west2-docker.pkg.dev/<project>/public-endpoint-monitor/public-endpoint-monitor:<commit‑sha>`. |
+| **Lint & package Helm chart** | `helm lint` & `helm package` | Produces `public-endpoint-monitor-<chart_ver>.tgz`. |
+| **Push chart (OCI)** | `helm push` | Uploads to `oci://europe‑west2-docker.pkg.dev/<project>/public-endpoint-monitor/helm`. |
+
+Authentication uses **Workload Identity Federation**—no JSON keys in the repo.
+
+### Verifying a run
+
+```bash
+# list images 
+gcloud artifacts docker images list \
+  europe-west2-docker.pkg.dev/public-endpoint-monitor/public-endpoint-monitor
+```
+
+You should see the image tagged with the commit SHA and the chart version
+0.1.<run_number> that match the latest green workflow.
+
+## Deploy from Artifact Registry (OCI)
+
+The Docker repository **also stores the Helm chart** as an OCI artifact, so you
+can pull or install it straight from Artifact Registry once you’re authenticated.
+
+### Log in to the registry
+
+```bash
+REGION=europe-west2
+REGISTRY_HOST=${REGION}-docker.pkg.dev
+PROJECT_ID=<your‑gcp‑project>
+
+gcloud auth login                        # once per machine
+gcloud config set project $PROJECT_ID
+
+# Helm login (1‑hour token)
+helm registry login $REGISTRY_HOST \
+  -u oauth2accesstoken \
+  -p "$(gcloud auth print-access-token)"
+
+### Install the latest chart
+```bash
+CHART=oci://$REGISTRY_HOST/$PROJECT_ID/public-endpoint-monitor/helm/public-endpoint-monitor
+VERSION=$(helm search repo $CHART --devel -l | head -n 2 | tail -n 1 | awk '{print $2}')
+
+helm install pem-prod $CHART \
+  --version $VERSION \
+  --namespace pem --create-namespace
+```
+After the pod is Running, port‑forward and hit the metrics:
+```bash
+kubectl port-forward svc/pem-prod-pem-metrics -n pem 9000:9000
+curl localhost:9000/metrics | grep ^pem_
+```
+
+### make workflow:
+```bash
+make helm-login
+make VERSION=0.1.<action workflow> helm-install-remote
 ```
