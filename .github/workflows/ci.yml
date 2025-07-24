@@ -1,52 +1,73 @@
 name: CI
+
 on:
   push:
     branches: [ main ]
   pull_request:
 
+# ---------------------------- common literals / secrets -----------------------
 env:
   REGION: europe-west2
-  PROJECT: ${{ secrets.GCP_PROJECT }}
-  REPO: public-endpoint-monitor                  # Artifact Registry repo
-  REGISTRY: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT }}/${{ env.REPO }}
+  PROJECT: ${{ secrets.GCP_PROJECT }}              # set in repo secrets
+  REPO: public-endpoint-monitor                   # Artifact Registry repo
   IMAGE: public-endpoint-monitor
   CHART_NAME: public-endpoint-monitor
-  CHART_VERSION: 0.1.${{ github.run_number }}
+  CHART_VERSION: 0.1.${{ github.run_number }}     # simple semver scheme
 
+# ------------------------------------------------------------------------------
 jobs:
+  # ---------------------------- tests & linters --------------------------------
   test-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.11" }
-      - run: pip install poetry==1.8.2
-      - run: poetry install
-      - run: poetry run pytest -q
-      - run: poetry run pre-commit run --all-files
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install poetry==1.8.2
+          poetry install
+
+      - name: Run unit tests
+        run: poetry run pytest -q
+
+      - name: Run pre-commit hooks
+        run: poetry run pre-commit run --all-files
+
+  # --------------------- build image + chart, push to GAR ---------------------
   build-and-push:
     needs: test-lint
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
+      id-token: write          # needed for workload‑identity federation
       contents: read
     steps:
       - uses: actions/checkout@v4
 
+      # -- Auth to Google Cloud -------------------------------------------------
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_PROVIDER }}
           service_account: ci-build@${{ env.PROJECT }}.iam.gserviceaccount.com
 
-      - name: Configure docker → Artifact Registry
+      # -- Derive REGISTRY (depends on REGION & PROJECT) ------------------------
+      - name: Set dynamic REGISTRY env var
+        run: echo "REGISTRY=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT }}/${{ env.REPO }}" >> $GITHUB_ENV
+
+      # -- Configure Docker for Artifact Registry ------------------------------
+      - name: Configure Docker
         run: gcloud auth configure-docker $REGISTRY --quiet
 
+      # -- Build & push container image ----------------------------------------
       - name: Build and push image
         run: |
           docker build -t $REGISTRY/$IMAGE:${{ github.sha }} .
           docker push $REGISTRY/$IMAGE:${{ github.sha }}
 
+      # -- Helm lint & package chart -------------------------------------------
       - name: Helm lint & package
         run: |
           helm lint charts/$CHART_NAME
@@ -54,6 +75,8 @@ jobs:
             --version $CHART_VERSION \
             --destination dist
 
-      - name: Push chart as OCI
+      # -- Push chart to Artifact Registry as OCI ------------------------------
+      - name: Push Helm chart
         run: |
+          helm registry login $REGISTRY -u oauth2accesstoken -p "$(gcloud auth print-access-token)"
           helm push dist/$CHART_NAME-$CHART_VERSION.tgz oci://$REGISTRY/helm
