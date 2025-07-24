@@ -14,5 +14,5 @@ spec:
           restartPolicy: Never
           containers:
             - name: probe
-              image: public-endpoint-manager:dev
+              image: public-endpoint-monitor:dev
               args: ["--url=https://www.google.com", "--interval=30s"] # one‑shot

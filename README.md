@@ -1,15 +1,15 @@
-# Public Endpoint Manager
+# Public Endpoint monitor
 
 Availability & latency monitoring for third‑party services  
 *(built as a DevOps portfolio project)*
 
-[![CI](https://github.com/stokesy56/public-endpoint-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/stokesy56/public-endpoint-manager/actions/workflows/ci.yml)
+[![CI](https://github.com/stokesy56/public-endpoint-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/stokesy56/public-endpoint-monitor/actions/workflows/ci.yml)
 
 ## Quick start (local)
 
 ```bash
-git clone https://github.com/stokesy56/public-endpoint-manager.git
-cd public-endpoint-manager
+git clone https://github.com/stokesy56/public-endpoint-monitor.git
+cd public-endpoint-monitor
 poetry install          # set up virtual env
 poetry run pytest -q    # run unit tests
 ```
@@ -46,7 +46,7 @@ kind create cluster --name pem-dev \
 
 # 3  Build the image & load it into the cluster
 make docker-build
-kind load docker-image public-endpoint-manager:dev --name pem-dev
+kind load docker-image public-endpoint-monitor:dev --name pem-dev
 
 # 4  Deploy manifests
 kubectl create ns pem
