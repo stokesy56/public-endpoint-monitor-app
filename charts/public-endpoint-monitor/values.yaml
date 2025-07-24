@@ -1,8 +1,8 @@
 replicaCount: 1
 
 image:
-  repository: public-endpoint-monitor
-  tag: dev
+  repository: europe-west2-docker.pkg.dev/public-endpoint-monitor/public-endpoint-monitor
+  tag: latest
   pullPolicy: IfNotPresent
 
 probe:
@@ -20,3 +20,6 @@ resources:
   limits:
     cpu: 100m
     memory: 128Mi
+
+scrape:
+  interval: 30s

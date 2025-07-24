@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "pem.fullname" . }}-alerts
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: pem.rules
+      rules:
+        - alert: EndpointDown
+          expr: |
+            sum without(result)(pem_probes_total{result="success",target="{{ .Values.probe.url }}"}) < 1
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Endpoint {{ .Values.probe.url }} is failing probes"
+            description: "No successful probe in the last 2 minutes."

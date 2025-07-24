@@ -65,5 +65,20 @@ helm-install: helm-clean
 helm-port:
 	kubectl port-forward svc/$(RELEASE)-pem-metrics -n $(NS) 9000:9000
 
+chart-package:
+	helm package charts/public-endpoint-monitor --destination dist
 
-.PHONY: install lint test format docker-build docker-run kind-up k8s-apply k8s-port kind-down helm-clean helm-install helm-port
+monitor-up:
+	helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+	  --version 59.0.0 --namespace monitoring --create-namespace \
+	  --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
+	  --set grafana.service.type=ClusterIP \
+	  --set grafana.enabled=true --set alertmanager.enabled=false
+
+monitor-port-prometheus:
+	kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9090:9090
+
+monitor-port-grafana:
+	kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
+
+.PHONY: install lint test format docker-build docker-run kind-up k8s-apply k8s-port kind-down helm-clean helm-install helm-port monitor-up monitor-port-prometheus monitor-port-grafana
