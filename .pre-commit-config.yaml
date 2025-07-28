@@ -18,9 +18,24 @@ repos:
         pass_filenames: false
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-yaml
         files: \.(yml|yaml)$
-        exclude: charts/.*/templates/.*  # ← skip Helm template dir
+        exclude: charts/.*/templates/.*
 
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.8
+    hooks:
+      - id: bandit
+        args: [-r, src/]
+        pass_filenames: false
+
+  - repo: local
+    hooks:
+      - id: helm-lint
+        name: helm lint
+        entry: helm lint charts/public-endpoint-monitor
+        language: system
+        pass_filenames: false
+        always_run: true

@@ -1,5 +1,7 @@
 SHELL := /usr/bin/env bash
 
+
+# ── Poetry config ────────────────────────────────────────────────────────
 install:
 	poetry install
 
@@ -13,7 +15,15 @@ test:
 format:  ## Format code with black
 	poetry run black .
 
+# ── pre-commit config ────────────────────────────────────────────────────────
 
+pre-commit-install:
+	poetry run pre-commit clean
+	poetry run pre-commit install
+	poetry run pre-commit run --all-files
+
+pre-commit-run:
+	poetry run pre-commit run --all-files
 # ── Docker build and run ────────────────────────────────────────────────────────
 
 

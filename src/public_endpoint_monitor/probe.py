@@ -1,6 +1,4 @@
-import sys
-import time
-import requests
+import requests, sys, time
 from prometheus_client import Counter, Histogram, start_http_server
 
 DEFAULT_URL = "https://www.google.com"

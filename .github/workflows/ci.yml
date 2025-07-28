@@ -8,9 +8,6 @@ on:
 env:
   REGION: europe-west2
   PROJECT: ${{ secrets.GCP_PROJECT }}
-  REPO: public-endpoint-monitor
-  IMAGE: public-endpoint-monitor
-  CHART_NAME: public-endpoint-monitor
   CHART_VERSION: 0.1.${{ github.run_number }}
 
 jobs:
@@ -42,7 +39,7 @@ jobs:
       - name: Set registry env vars
         run: |
           echo "REGISTRY_HOST=${{ env.REGION }}-docker.pkg.dev" >> $GITHUB_ENV
-          echo "REGISTRY=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT }}/${{ env.REPO }}" >> $GITHUB_ENV
+          echo "REGISTRY=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT }}/${{ env.PROJECT }}-registry" >> $GITHUB_ENV
 
       # ── Configure Docker creds for Artifact Registry host only -------------
       - name: Configure Docker
@@ -51,14 +48,14 @@ jobs:
       # ── Build & push container image --------------------------------------
       - name: Build & push image
         run: |
-          docker build -t $REGISTRY/$IMAGE:${{ github.sha }} .
-          docker push $REGISTRY/$IMAGE:${{ github.sha }}
+          docker build -t $REGISTRY/$PROJECT:${{ github.sha }} .
+          docker push $REGISTRY/$PROJECT:${{ github.sha }}
 
       # ── Helm lint & package chart -----------------------------------------
       - name: Helm lint & package
         run: |
-          helm lint charts/$CHART_NAME
-          helm package charts/$CHART_NAME \
+          helm lint charts/$PROJECT
+          helm package charts/$PROJECT \
             --version $CHART_VERSION \
             --destination dist
 
@@ -68,4 +65,4 @@ jobs:
           helm registry login $REGISTRY_HOST \
             -u oauth2accesstoken \
             -p "$(gcloud auth print-access-token)"
-          helm push dist/$CHART_NAME-$CHART_VERSION.tgz oci://$REGISTRY/helm
+          helm push dist/$PROJECT-$CHART_VERSION.tgz oci://$REGISTRY/helm

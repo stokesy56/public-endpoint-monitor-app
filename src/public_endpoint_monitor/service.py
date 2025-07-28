@@ -8,13 +8,9 @@ Long‑running process that:
 3. Records Prometheus metrics (handled inside probe()) and logs each result
 """
 
-import argparse
-import logging
-import time
+import argparse, logging, time
 from datetime import datetime, timezone
-
 from prometheus_client import start_http_server
-
 from .probe import probe, DEFAULT_URL
 
 

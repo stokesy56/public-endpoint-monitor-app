@@ -1,7 +1,5 @@
 # tests/test_service.py
-import sys
-import logging
-import pytest
+import logging, pytest, sys
 import public_endpoint_monitor.service as service
 
 

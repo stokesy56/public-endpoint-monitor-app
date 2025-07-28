@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: {{ include "pem.fullname" . }}
   labels: {{- include "pem.labels" . | nindent 4 }}
+  annotations:
+    autopilot.gke.io/resource-policy: spot
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
