@@ -1,3 +1,4 @@
+{{- if .Values.monitoring.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -16,3 +17,4 @@ spec:
     - port: metrics
       interval: {{ .Values.scrape.interval | default "30s" }}
       scrapeTimeout: 5s
+{{- end }}

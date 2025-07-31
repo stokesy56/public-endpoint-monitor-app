@@ -1,3 +1,4 @@
+{{- if .Values.monitoring.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -17,3 +18,4 @@ spec:
           annotations:
             summary: "Endpoint {{ .Values.probe.url }} is failing probes"
             description: "No successful probe in the last 2 minutes."
+{{- end }}

@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: europe-west2-docker.pkg.dev/public-endpoint-monitor/public-endpoint-monitor
+  repository: europe-west2-docker.pkg.dev/public-endpoint-monitor/public-endpoint-monitor-registry/helm/public-endpoint-monitor
   tag: latest
   pullPolicy: IfNotPresent
 
@@ -23,3 +23,6 @@ resources:
 
 scrape:
   interval: 30s
+
+monitoring:
+  enabled: true
