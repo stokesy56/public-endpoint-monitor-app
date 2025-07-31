@@ -23,6 +23,3 @@ resources:
 
 scrape:
   interval: 30s
-
-monitoring:
-  enabled: true
