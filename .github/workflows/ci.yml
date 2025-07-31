@@ -45,11 +45,18 @@ jobs:
       - name: Configure Docker
         run: gcloud auth configure-docker $REGISTRY_HOST --quiet
 
-      # ── Build & push container image --------------------------------------
+      # ── Build & push container image (two tags) ───────────────────────────────
       - name: Build & push image
         run: |
-          docker build -t $REGISTRY/$PROJECT:${{ github.sha }} .
-          docker push $REGISTRY/$PROJECT:${{ github.sha }}
+          IMAGE_PATH="$REGISTRY/$PROJECT"
+          docker buildx create --use --driver docker-container >/dev/null 2>&1 || true
+
+          # Build, tag, and push in a single shot
+          docker buildx build . \
+            --platform linux/amd64 \
+            --tag "${IMAGE_PATH}:${{ github.sha }}" \
+            --tag "${IMAGE_PATH}:latest" \
+            --push
 
       # ── Helm lint & package chart -----------------------------------------
       - name: Helm lint & package
