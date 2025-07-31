@@ -54,6 +54,7 @@ jobs:
       # ── Helm lint & package chart -----------------------------------------
       - name: Helm lint & package
         run: |
+          helm dependency update charts/public-endpoint-monitor
           helm lint charts/$PROJECT
           helm package charts/$PROJECT \
             --version $CHART_VERSION \
